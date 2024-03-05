@@ -1,0 +1,15 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggtext)
+library(latex2exp)
+library(svglite)
+library(R.matlab)
+library(ggtext)
+source("../linefit.R")
+```
+
+```{r Import raw data}
+exp3_v_in_200_raw <- readMat('data/exp3/exp3_v_in_200.mat')
+exp3_v_out_200_raw <- readMat('data/exp3/exp3_v_out_200.mat')
+```

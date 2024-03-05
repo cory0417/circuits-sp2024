@@ -1,0 +1,28 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggtext)
+library(latex2exp)
+library(svglite)
+library(R.matlab)
+library(ggtext)
+source("../linefit.R")
+```
+
+```{r Import raw data}
+exp2_i_b_200_raw <- readMat('data/exp2/exp2_i_b_200.mat')
+exp2_i_b_20k_raw <- readMat('data/exp2/exp2_i_b_20k.mat')
+exp2_i_b_2k_raw <- readMat('data/exp2/exp2_i_b_2k.mat')
+exp2_i_c_200_raw <- readMat('data/exp2/exp2_i_c_200.mat')
+exp2_i_c_20k_raw <- readMat('data/exp2/exp2_i_c_20k.mat')
+exp2_i_c_2k_raw <- readMat('data/exp2/exp2_i_c_2k.mat')
+exp2_i_e_200_raw <- readMat('data/exp2/exp2_i_e_200.mat')
+exp2_i_e_20k_raw <- readMat('data/exp2/exp2_i_e_20k.mat')
+exp2_i_e_2k_raw <- readMat('data/exp2/exp2_i_e_2k.mat')
+exp2_v_be_200_raw <- readMat('data/exp2/exp2_v_be_200.mat')
+exp2_v_be_20k_raw <- readMat('data/exp2/exp2_v_be_20k.mat')
+exp2_v_be_2k_raw <- readMat('data/exp2/exp2_v_be_2k.mat')
+exp2_v_e_200_raw <- readMat('data/exp2/exp2_v_e_200.mat')
+exp2_v_e_20k_raw <- readMat('data/exp2/exp2_v_e_20k.mat')
+exp2_v_e_2k_raw <- readMat('data/exp2/exp2_v_e_2k.mat')
+```
