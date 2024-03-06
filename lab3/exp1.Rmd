@@ -17,3 +17,242 @@ exp1_V_be_raw <- readMat('data/exp1/exp1_v_be.mat')
 exp1_V_e_raw <- readMat('data/exp1/exp1_v_e.mat')
 ```
 
+```{r}
+df_exp1 <- data.frame(
+  I_b = as.vector(t(exp1_I_b_raw$exp1.i.b))[-1],
+  I_c = as.vector(t(exp1_I_c_raw$exp1.i.c))[-1], 
+  V_be = as.vector(t(exp1_V_be_raw$exp1.v.be))[-1]
+  )
+```
+
+```{r Semilog I_c and I_b vs V_be, warning=FALSE}
+df_exp1_pivoted <- df_exp1 %>%
+  pivot_longer(
+    cols = starts_with("I_"),
+    values_to = "I",
+    names_to = "terminal",
+    names_prefix = "I_"
+  )
+
+exp1_IV_lm_I_c <- lm(I_c ~ V_be, data = df_exp1 %>% filter(I_c > 0) %>% mutate(I_c=log(I_c)))
+U_T_c <- 1 / coef(exp1_IV_lm_I_c)[2]
+I_s <- exp(coef(exp1_IV_lm_I_c)[1])
+
+exp1_IV_lm_I_b <- lm(I_b ~ V_be, data = df_exp1 %>% filter(I_b > 0) %>% mutate(I_b=log(I_b)))
+U_T_b <- 1 / coef(exp1_IV_lm_I_b)[2]
+slope_b <- exp(coef(exp1_IV_lm_I_b)[1])
+exp1_beta <- I_s/slope_b
+
+theory_equation_label_I_c <- sprintf("Theoretical: $\\ln(I_c) = \\frac{V_{`be`}}{U_T} + \\ln(I_s)$")
+theory_equation_label_I_b <- sprintf("Theoretical: $\\ln(I_b) = \\frac{V_{`be`}}{U_T} + \\ln(\\frac{I_s}{\\beta})$")
+
+p1 <- df_exp1_pivoted %>% 
+  filter(I > 0) %>% 
+  ggplot() +
+  geom_point(
+    aes(V_be, I, color=terminal)
+    ) +
+  geom_line(aes(x = V_be, y = I_s * exp(V_be / U_T_c), color="Empirical Fit"), linetype = 'dashed') +
+  geom_line(aes(x = V_be, y = slope_b * exp(V_be / U_T_b), color="Empirical Fit"), linetype = 'dashed') +
+  scale_y_log10(limits=c(1e-10, 1e-1)) +
+  theme_minimal() +
+  labs(
+    title = expression(I[c]~and~I[b]~vs~V[be]), 
+    y = expression(I ~ "(A)"), 
+    x = expression(V[b] ~ "(V)"), 
+    parse=TRUE,
+    color = "Terminal"
+    ) +
+  annotate(
+    "text",
+    x=0.3,
+    y=exp(-4),
+    label = TeX(theory_equation_label_I_b, output = "character"),
+    parse=TRUE,
+    hjust = 0,
+    vjust = 1.0, 
+    size = 4
+    ) +
+  annotate(
+    "text",
+    x=0.3,
+    y=exp(-8),
+    label = TeX(theory_equation_label_I_c, output = "character"),
+    parse=TRUE,
+    hjust = 0,
+    vjust = 1.0, 
+    size = 4
+    ) +
+  annotate(
+    "text",
+    x=0.7,
+    y=exp(-16),
+    label = sprintf("U[T] == %.2e*V", U_T_c),
+    parse=TRUE,
+    hjust = 0,
+    vjust = 0.5, 
+    size = 4
+    ) +
+  annotate(
+    "text",
+    x=0.7,
+    y=exp(-18),
+    label = sprintf("I[s] == %.2e*fA", I_s*1e15),
+    parse=TRUE,
+    hjust = 0,
+    vjust = 0.5, 
+    size = 4
+    ) +
+  annotate(
+    "text",
+    x=0.7,
+    y=exp(-14),
+    label = sprintf("beta == %.3e", exp1_beta),
+    parse=TRUE,
+    hjust = 0,
+    vjust = 0.5, 
+    size = 4
+    ) +
+  scale_color_manual(values = c("b" = "#393e8f","c" = "#b12228", "Empirical Fit" = "#999999"),
+                     labels = c("Base", "Collector", "Empirical Fit"))
+  
+print(p1)
+```
+
+```{r Semilog beta vs I_b, warning=FALSE}
+df_exp1_plot2 <- 
+  df_exp1 %>% 
+  filter(I_b > 0) %>% 
+  mutate(beta=I_c/I_b)
+
+y_breaks <- seq(100, 700, 200) %>% append(174.4282)
+y_labels <- as.character(y_breaks)
+y_labels[which(y_breaks == 174.4282)] <- sprintf("beta == %.3e", exp1_beta)
+
+df_exp1_plot2 %>% 
+  ggplot(aes(I_b, beta)) +
+  geom_point(size=0.5) +
+  geom_hline(aes(yintercept=174.4282, color='Extracted from Ideal Diode equation'), linetype='dashed') +
+  scale_x_log10() +
+  scale_y_continuous(labels=parse(text=y_labels), limits=c(50, 700)) +
+  theme_minimal() +
+  labs(
+    title=expression(I[b]~vs~beta),
+    x=expression(I[b]~(A)),
+    y=expression(beta),
+    parse=TRUE,
+    color=""
+  )
+
+```
+
+```{r Log-log r_b vs I_b}
+
+r_b_extracted <- diff(df_exp1$V_be)/diff(df_exp1$I_b)
+
+df_exp1_plot3 <- 
+  df_exp1 %>% 
+  slice(-1) %>% 
+  mutate(r_b_extracted = r_b_extracted) %>% 
+  filter(I_b > 0) %>% 
+  mutate(r_b_theory = U_T_b / I_b) %>% 
+  pivot_longer(
+    cols = starts_with("r_b"),
+    names_to = "type",
+    values_to = "r_b",
+    names_prefix = "r_b_"
+  )
+
+df_exp1_plot3 %>% 
+  ggplot(aes(I_b, r_b, color=type)) + 
+  geom_point(data=. %>% filter(type=="extracted")) +
+  geom_line(aes(x = I_b, y = U_T_b/I_b , color="theory"), linetype = 'dashed') +
+  annotate(
+    "text",
+    x=0.8e-4,
+    y=1e5,
+    label = "Extracted:~r[b] == frac(partialdiff*V[b], partialdiff*I[b])",
+    parse=TRUE,
+    hjust = 1,
+    vjust = 0.5, 
+    size = 4
+    ) +
+  annotate(
+    "text",
+    x=0.8e-4,
+    y=1e6,
+    label = "Theoretical:~r[b] == frac(U[T], I[b])",
+    parse=TRUE,
+    hjust = 1,
+    vjust = 0.5, 
+    size = 4
+    ) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_minimal() +
+  labs(
+    title=expression(r[b]~vs~I[b]),
+    x=expression(I[b]~(A)),
+    y=expression(r[b]~(Omega)),
+    parse=TRUE,
+    color="Type"
+  ) +
+  scale_color_manual(values = c("extracted" = "#393e8f","theory" = "#b12228"),
+                     labels = c("Extracted", "Theoretical"))
+```
+
+```{r Log-log g_m vs I_c}
+g_m_extracted <- diff(df_exp1$I_c)/diff(df_exp1$V_be)
+
+
+df_exp1_plot4 <- 
+  df_exp1 %>% 
+  slice(-1) %>% 
+  mutate(g_m_extracted = g_m_extracted) %>% 
+  filter(I_c > 0) %>% 
+  mutate(g_m_theory = I_c / U_T_c) %>% 
+  pivot_longer(
+    cols = starts_with("g_m"),
+    names_to = "type",
+    values_to = "g_m",
+    names_prefix = "g_m_"
+  )
+
+df_exp1_plot4 %>% 
+  ggplot(aes(I_c, g_m, color=type)) + 
+  geom_point(data=. %>% filter(type=="extracted"), size=1) +
+  geom_line(aes(x = I_c, y = I_c/U_T_c , color="theory"), linetype = 'dashed') +
+  annotate(
+    "text",
+    x=1e-7,
+    y=1e-1,
+    label = "Extracted:~g[m] == frac(partialdiff*I[c], partialdiff*V[b])",
+    parse=TRUE,
+    hjust = 1,
+    vjust = 0.5, 
+    size = 4
+    ) +
+  annotate(
+    "text",
+    x=1e-7,
+    y=1e-3,
+    label = "Theoretical:~g[m] == frac(I[c], U[T])",
+    parse=TRUE,
+    hjust = 1,
+    vjust = 0, 
+    size = 4
+    ) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_minimal() +
+  labs(
+    title=expression(g[m]~vs~I[c]),
+    x=expression(I[c]~(A)),
+    y=expression(g[m]~(S)),
+    parse=TRUE,
+    color="Type"
+  ) +
+  scale_color_manual(values = c("extracted" = "#393e8f","theory" = "#b12228"),
+                     labels = c("Extracted", "Theoretical"))
+```
+
