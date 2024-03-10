@@ -1,0 +1,60 @@
+---
+title: "lab3"
+author: "Daeyoung Kim"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggtext)
+library(latex2exp)
+library(svglite)
+library(R.matlab)
+library(ggtext)
+source("../linefit.R")
+```
+# Experiment 1
+
+## Import raw data
+```{r Exp 1: raw data}
+exp1_I_c_raw <- readMat('data/exp1_i_c.mat')
+exp1_I_b_raw <- readMat('data/exp1_i_b.mat')
+exp1_V_be_raw <- readMat('data/exp1_v_be.mat')
+
+df_exp1 <- data.frame(
+  I_b = as.vector(t(exp1_I_b_raw$exp1.i.b))[-1],
+  I_c = as.vector(t(exp1_I_c_raw$exp1.i.c))[-1], 
+  V_be = as.vector(t(exp1_V_be_raw$exp1.v.be))[-1]
+  )
+```
+
+```{r Exp 2: raw data}
+# R=200
+exp2_I_c_raw <- readMat('data/exp2_i_c_200.mat')
+exp2_V_be_raw <- readMat('data/exp2_v_be_200.mat')
+
+df_exp1 <- data.frame(I_c = as.vector(t(exp1_I_c_raw$exp1.i.c))[-1], V_be = as.vector(t(exp1_V_be_raw$exp1.v.be))[-1])
+
+# R=2000
+
+# R=20000
+```
+
+```{r Exp 1}
+df_exp1 %>% 
+  ggplot(aes(V_be, I_c)) +
+  geom_point() +
+  # scale_y_log10() +
+  theme_minimal() +
+  labs(
+    title = "", 
+    y = expression(I[c] ~ "(A)"), 
+    x = expression(V[BE] ~ "(V)"), 
+    parse=TRUE,
+    color = "Characteristic"
+    )
+  
+```
+
