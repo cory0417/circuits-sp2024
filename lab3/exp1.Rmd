@@ -116,23 +116,26 @@ p1 <- df_exp1_pivoted %>%
   scale_color_manual(values = c("b" = "#393e8f","c" = "#b12228", "Empirical Fit" = "#999999"),
                      labels = c("Base", "Collector", "Empirical Fit"))
   
-print(p1)
+ggsave("exp1_p1.pdf", p1)
 ```
 
 ```{r Semilog beta vs I_b, warning=FALSE}
 df_exp1_plot2 <- 
   df_exp1 %>% 
   filter(I_b > 0) %>% 
-  mutate(beta=I_c/I_b)
+  mutate(beta=.$I_c/.$I_b)
 
-y_breaks <- seq(100, 700, 200) %>% append(174.4282)
+y_breaks <- c( 100, 174.4282,300, 500, 700)
 y_labels <- as.character(y_breaks)
 y_labels[which(y_breaks == 174.4282)] <- sprintf("beta == %.3e", exp1_beta)
 
-df_exp1_plot2 %>% 
+p2 <-df_exp1_plot2 %>% 
   ggplot(aes(I_b, beta)) +
   geom_point(size=0.5) +
-  geom_hline(aes(yintercept=174.4282, color='Extracted from Ideal Diode equation'), linetype='dashed') +
+  geom_hline(
+    aes(yintercept=174.4282, color=str_wrap("Extracted from Ideal Diode equation", 15)),
+    linetype='dashed'
+    ) +
   scale_x_log10() +
   scale_y_continuous(labels=parse(text=y_labels), limits=c(50, 700)) +
   theme_minimal() +
@@ -144,6 +147,7 @@ df_exp1_plot2 %>%
     color=""
   )
 
+ggsave("exp1_p2.pdf", p2)
 ```
 
 ```{r Log-log r_b vs I_b}
@@ -163,7 +167,7 @@ df_exp1_plot3 <-
     names_prefix = "r_b_"
   )
 
-df_exp1_plot3 %>% 
+p3 <- df_exp1_plot3 %>% 
   ggplot(aes(I_b, r_b, color=type)) + 
   geom_point(data=. %>% filter(type=="extracted")) +
   geom_line(aes(x = I_b, y = U_T_b/I_b , color="theory"), linetype = 'dashed') +
@@ -199,6 +203,8 @@ df_exp1_plot3 %>%
   ) +
   scale_color_manual(values = c("extracted" = "#393e8f","theory" = "#b12228"),
                      labels = c("Extracted", "Theoretical"))
+
+ggsave("exp1_p3.pdf", p3)
 ```
 
 ```{r Log-log g_m vs I_c}
@@ -218,7 +224,7 @@ df_exp1_plot4 <-
     names_prefix = "g_m_"
   )
 
-df_exp1_plot4 %>% 
+p4 <- df_exp1_plot4 %>% 
   ggplot(aes(I_c, g_m, color=type)) + 
   geom_point(data=. %>% filter(type=="extracted"), size=1) +
   geom_line(aes(x = I_c, y = I_c/U_T_c , color="theory"), linetype = 'dashed') +
@@ -254,5 +260,7 @@ df_exp1_plot4 %>%
   ) +
   scale_color_manual(values = c("extracted" = "#393e8f","theory" = "#b12228"),
                      labels = c("Extracted", "Theoretical"))
+
+ggsave("exp1_p4.pdf", p4)
 ```
 
