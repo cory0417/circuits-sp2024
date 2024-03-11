@@ -16,5 +16,77 @@ exp4_v_in_600_raw <- readMat('data/exp4/exp4_v_in_600.mat')
 exp4_v_out_200_raw <- readMat('data/exp4/exp4_v_out_200.mat')
 exp4_v_out_400_raw <- readMat('data/exp4/exp4_v_out_400.mat')
 exp4_v_out_600_raw <- readMat('data/exp4/exp4_v_out_600.mat')
+
+#Dataframe for 200 Ohm resistor
+V_in_200 <- as.vector(t(exp4_v_in_200_raw$exp4.v.in.200)) 
+V_out_200 <- as.vector(t(exp4_v_out_200_raw$exp4.v.out.200))
+  df_exp4_Vin_Vout_200 <- data.frame(V_in_200= V_in_200, V_out_200 = V_out_200)
+#Dataframe for 400 Ohm resistor
+V_in_400 <- as.vector(t(exp4_v_in_400_raw$exp4.v.in.400)) 
+V_out_400 <- as.vector(t(exp4_v_out_400_raw$exp4.v.out.400))
+  df_exp4_Vin_Vout_400 <- data.frame(V_in_400= V_in_400, V_out_400 = V_out_400)
+#Dataframe for 600 Ohm resistor
+V_in_600 <- as.vector(t(exp4_v_in_600_raw$exp4.v.in.600)) 
+V_out_600 <- as.vector(t(exp4_v_out_600_raw$exp4.v.out.600))
+  df_exp4_Vin_Vout_600 <- data.frame(V_in_600= V_in_600, V_out_600 = V_out_600)
+
 ```
+
+```{r}
+df_merged_200_400 <- full_join(df_exp4_Vin_Vout_200, df_exp4_Vin_Vout_400, by=join_by("V_in_200" == "V_in_400"))
+
+df_merged <- full_join(df_merged_200_400, df_exp4_Vin_Vout_600, by=join_by("V_in_200" == "V_in_600")) %>% rename(V_in = V_in_200) %>% 
+  pivot_longer(
+    cols = starts_with("V_out_"),
+    values_to = "V_out",
+    names_to = "R",
+    names_prefix = "V_out_"
+  )
+
+ggplot(df_merged %>% filter(V_in<2), aes(x = V_in, y = V_out, color=R)) +
+  geom_point() +
+  labs(title = "Input vs. Output Voltage for 200, 400, and 600 Ohm Resistors",
+    y = expression(V[out] ~ "(V)"), 
+    x = expression(V[`in`] ~ "(V)"), 
+    parse = TRUE,
+    color = "Characteristic") +
+  theme_minimal()
+
+```
+
+```{r}
+df_merged_200_400 <- full_join(df_exp4_Vin_Vout_200, df_exp4_Vin_Vout_400, by=join_by("V_in_200" == "V_in_400"))
+
+df_merged <- full_join(df_merged_200_400, df_exp4_Vin_Vout_600, by=join_by("V_in_200" == "V_in_600")) %>% rename(V_in = V_in_200) %>% 
+  pivot_longer(
+    cols = starts_with("V_out_"),
+    values_to = "V_out",
+    names_to = "R",
+    names_prefix = "V_out_"
+  )
+
+
+# exp4_linear_fit <- lm(V_out ~ V_in, df_merged %>% filter(V_in > 1))
+# y_intercept <- coef(exp3_linear_fit)[1]
+# slope <- coef(exp3_linear_fit)[2]
+
+
+ggplot(df_merged %>% filter(V_in<2), aes(x = V_in, y = V_out, color=R)) +
+  geom_point() +
+  geom_function(data=. %>% filter(R=="200") %>% filter(V_in<2), fun= function(x) 5-I_s*exp(x/(2*U_T))*200) +
+  # geom_point(aes(x = V_in_400, y = V_out_400), color = "red") +
+  # geom_point(aes(x = V_in_600, y = V_out_600), color = "green") +
+  labs(title = "Input vs. Output Voltage for 200, 400, and 600 Ohm Resistors",
+    y = expression(V[out] ~ "(V)"), 
+    x = expression(V[`in`] ~ "(V)"), 
+    parse = TRUE,
+    color = "Characteristic") +
+  theme_minimal()
+```
+
+
+
+
+
+
 

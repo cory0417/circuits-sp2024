@@ -8,8 +8,65 @@ library(R.matlab)
 library(ggtext)
 source("../linefit.R")
 ```
-
+Experiment 3 
 ```{r Import raw data}
+
 exp3_v_in_200_raw <- readMat('data/exp3/exp3_v_in_200.mat')
 exp3_v_out_200_raw <- readMat('data/exp3/exp3_v_out_200.mat')
+
+V_in <- as.vector(t(exp3_v_in_200_raw$exp3.v.in.200)) 
+V_out <- as.vector(t(exp3_v_out_200_raw$exp3.v.out.200))
+
+df_exp3_Vin_Vout <- data.frame(V_in = V_in, V_out = V_out)
+
+# Adding a new column
+df_exp3_Vin_Vout$R <- "200"
+
+
+
 ```
+
+```{r}
+exp3_linear_fit <- lm(V_out ~ V_in, df_exp3_Vin_Vout %>% filter(V_in > 1))
+y_intercept <- coef(exp3_linear_fit)[1]
+slope <- coef(exp3_linear_fit)[2]
+
+theory_equation_label_I_c <- sprintf("Theoretical: $A_v = \\frac{V_{`in`}}{V_{out}}$")
+
+#PLOT
+part1 <- ggplot(df_exp3_Vin_Vout, aes(V_in, V_out)) +
+  geom_point(aes(color = "Empirical Data"), size = 2, shape = 1) +    
+  geom_abline(
+     data = exp3_linear_fit, 
+     aes(slope = slope, intercept = y_intercept, color = 'Theoretical Fit'), 
+     linetype='dashed'
+    ) +
+  scale_color_manual(values = c("Empirical Data" = "#b12228", "Theoretical Fit" = "#999999"),
+                     labels = c("Empirical Data", "Theoretical Fit")) + 
+  annotate(
+    "text",
+    x=1,
+    y=exp(1.2),
+    label = TeX(theory_equation_label_I_c, output = "character"),
+    parse=TRUE,
+    hjust = 0,
+    vjust = 1.0, 
+    size = 4
+    ) +
+  
+  labs(
+    title = "Emitter-follower’s Voltage Transfer Characteristic", 
+    y = expression(V[out] ~ "(V)"), 
+    x = expression(V["in"] ~ "(V)"), 
+    parse = TRUE,
+    color = "Characteristic"
+  ) + 
+  theme_minimal()
+ggsave("exp3plot.pdf", part1)
+```
+
+
+
+
+
+
